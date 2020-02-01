@@ -21,7 +21,7 @@ const FileList = ({files, onFileClick, onSaveEdit, onFileDelete}) => {
   useEffect(() => {
     const editItem = files.find(file => file.id === editStatus);
     if (enterPressed && editStatus && value.trim() !== '') {
-      onSaveEdit(editStatus, value);
+      onSaveEdit(editStatus, value, editItem.isNew);
       setEditStatus(false);
       setValue('');
     } else if (escPressed && editStatus) {
