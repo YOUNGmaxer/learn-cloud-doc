@@ -10,19 +10,32 @@ const FileList = ({files, onFileClick, onSaveEdit, onFileDelete}) => {
   const [ value, setValue ] = useState('');
   const enterPressed = useKeyPress(13);
   const escPressed = useKeyPress(27);
-  const closeSearch = (e) => {
+  const closeSearch = (editItem) => {
     setEditStatus(false);
-    setValue(''); 
+    setValue('');
+    // if we are editing a newly created file, we should delete this file
+    if (editItem.isNew) {
+      onFileDelete(editItem.id);
+    }
   }
   useEffect(() => {
-    if (enterPressed && editStatus) {
+    const editItem = files.find(file => file.id === editStatus);
+    if (enterPressed && editStatus && value.trim() !== '') {
       onSaveEdit(editStatus, value);
       setEditStatus(false);
       setValue('');
     } else if (escPressed && editStatus) {
-      closeSearch();
+      closeSearch(editItem);
     }
   });
+  useEffect(() => {
+    const newFile = files.find(file => file.isNew);
+    console.log(newFile);
+    if (newFile) {
+      setEditStatus(newFile.id);
+      setValue(newFile.title);
+    }
+  }, [files])
   return (
     <ul className="list-group list-group-flush file-list">
       {
@@ -31,7 +44,7 @@ const FileList = ({files, onFileClick, onSaveEdit, onFileDelete}) => {
             className="list-group-item bg-light row no-gutters d-flex align-items-center file-item"
             key={file.id}
           >
-            { (file.id !== editStatus) &&
+            { ((file.id !== editStatus) && !file.isNew) &&
               <>
                 <span className="col-2">
                   <FontAwesomeIcon
@@ -67,17 +80,18 @@ const FileList = ({files, onFileClick, onSaveEdit, onFileDelete}) => {
                 </button>
               </>
             }
-            { (file.id === editStatus) &&
+            { ((file.id === editStatus) || file.isNew) &&
               <>
                 <input
-                  className="form-control form-control-sm col-10"
+                  className="form-control form-control-sm col-10 px-2"
                   value={value}
+                  placeholder="请输入文件名称"
                   onChange={(e) => { setValue(e.target.value) }}
                 />
                 <button
                   type="button"
                   className="icon-button col-2"
-                  onClick={closeSearch}
+                  onClick={() => {closeSearch(file)}}
                 >
                   <FontAwesomeIcon
                     title="关闭"
