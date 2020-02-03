@@ -56,6 +56,13 @@ function App() {
   const fileClick = (fileID) => {
     // set current active file
     setActiveFileID(fileID);
+    const currentFile = files[fileID];
+    if (!currentFile.isLoaded) {
+      fileHelper.readFile(currentFile.path).then(value => {
+        const newFile = { ...currentFile, body: value, isLoaded: true };
+        setFiles({ ...files, [fileID]: newFile });
+      });
+    }
     // if openedFileIDs don't have the current ID
     // then add new fileID to openedFileIDs
     if (!openedFileIDs.includes(fileID)) {
@@ -76,13 +83,18 @@ function App() {
     }
   }
   const deleteFile = (id) => {
-    fileHelper.deleteFile(files[id].path).then(() => {
-      delete files[id];
-      setFiles(files);
-      saveFilesToStore(files);
-      // close tab if opened
-      tabClose(id);
-    });
+    if (files[id].isNew) {
+      const { [id]: value, ...afterDelete } = files;
+      setFiles(afterDelete);
+    } else {
+      fileHelper.deleteFile(files[id].path).then(() => {
+        const { [id]: value, ...afterDelete } = files;
+        setFiles(afterDelete);
+        saveFilesToStore(afterDelete);
+        // close tab if opened
+        tabClose(id);
+      });
+    }
   }
   const updateFileName = (id, title, isNew) => {
     const newPath = join(savedLocation, `${title}.md`);
